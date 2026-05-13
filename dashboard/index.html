@@ -1,13 +1,494 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dashboard</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANTIGRAVITY | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #05070a;
+            --card-bg: rgba(15, 20, 28, 0.7);
+            --accent-primary: #00f2fe;
+            --accent-secondary: #4facfe;
+            --text-main: #e0e6ed;
+            --text-dim: #94a3b8;
+            --danger: #ff4d4d;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --bnb-yellow: #F3BA2F;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(243, 186, 47, 0.05) 0%, transparent 40%);
+        }
+
+        /* Glassmorphism Header */
+        header {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5, 7, 10, 0.8);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--bg-dark);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.4);
+            font-size: 1.2rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 1.8rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--accent-primary);
+            box-shadow: 0 15px 35px rgba(0, 242, 254, 0.1);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--accent-primary), transparent);
+            opacity: 0.5;
+        }
+
+        .stat-label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value.accent { color: var(--accent-primary); }
+        .stat-value.bnb { color: var(--bnb-yellow); }
+
+        .stat-subtext {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* Devices List */
+        .section-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 5px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 3px;
+        }
+
+        .device-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-out backwards;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .device-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active { background: rgba(0, 255, 136, 0.15); color: var(--success); border: 1px solid rgba(0, 255, 136, 0.3); }
+        .status-warning { background: rgba(255, 170, 0, 0.15); color: var(--warning); border: 1px solid rgba(255, 170, 0, 0.3); }
+        .status-danger { background: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.3); }
+
+        .device-metrics {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .metric-item {
+            text-align: right;
+        }
+
+        .metric-item .label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .metric-item .value {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        /* Sidebar & Logs */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .log-box {
+            background: #000;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 242, 254, 0.1);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .log-item {
+            margin-bottom: 0.6rem;
+            line-height: 1.4;
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .log-time { color: var(--accent-secondary); min-width: 70px; }
+        .log-msg { color: var(--text-main); }
+        .log-msg.alert { color: var(--warning); }
+
+        /* unMineable Quick Link */
+        .external-card {
+            background: linear-gradient(135deg, rgba(243, 186, 47, 0.1), rgba(0, 242, 254, 0.05));
+            border: 1px solid rgba(243, 186, 47, 0.2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .external-card:hover { transform: scale(1.03); }
+
+        .external-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .external-title { font-weight: 700; color: var(--bnb-yellow); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">A</div>
+            <div class="logo-text">
+                <h1>Antigravity</h1>
+                <p style="font-size: 0.7rem; color: var(--text-dim); font-weight: 600;">AUTONOMOUS COMPUTE NETWORK</p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <div id="connection-status" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 700;">
+                <span id="status-dot" style="width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success);"></span>
+                <span id="status-text">SYSTEM ONLINE</span>
+            </div>
+            <div style="height: 20px; width: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div id="current-time" style="font-weight: 600; font-size: 0.9rem; color: var(--text-dim);">00:00:00</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Global Metrics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Network Hashrate</div>
+                    <div class="stat-value accent" id="total-hashrate">0.00 H/s</div>
+                    <div class="stat-subtext" id="node-count">0 Active Processing Units</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Balance</div>
+                    <div class="stat-value bnb" id="bnb-balance">0.00000000</div>
+                    <div class="stat-subtext">BNB (unMineable Pool)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Est. Daily Earnings</div>
+                    <div class="stat-value" id="daily-earnings">0.00000</div>
+                    <div class="stat-subtext" id="hourly-earnings">Hourly: 0.000000</div>
+                </div>
+            </div>
+
+            <!-- Nodes Section -->
+            <div class="section-header">
+                <div class="section-title">Compute Infrastructure</div>
+            </div>
+            <div id="nodes-container">
+                <!-- Nodes dynamically injected here -->
+                <div style="text-align: center; padding: 5rem; color: var(--text-dim); background: var(--card-bg); border-radius: 20px;">
+                    <p>Scanning network for active nodes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- unMineable Card -->
+            <a href="https://unmineable.com/address/0xb71ddf8f661490314455dff6625b41eadf950701?coin=BNB" target="_blank" class="external-card">
+                <div class="external-header">
+                    <span class="external-title">unMineable Live</span>
+                    <span style="font-size: 0.7rem; opacity: 0.7;">OPEN PAGE ↗</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">Wallet Address:</div>
+                <div style="font-size: 0.7rem; word-break: break-all; opacity: 0.8;">0xb71ddf8f661490314455dff6625b41eadf950701</div>
+            </a>
+
+            <!-- Logs Section -->
+            <div class="log-box">
+                <div class="section-title" style="margin-bottom: 1rem; font-size: 1rem;">Command Intelligence</div>
+                <div class="log-content" id="log-content">
+                    <div class="log-item">
+                        <span class="log-time">[SYSTEM]</span>
+                        <span class="log-msg">Kernel initialized. Awaiting telemetry...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WALLET = "0xb71ddf8f661490314455dff6625b41eadf950701";
+        const COIN = "BNB";
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+
+        async function fetchUnmineableData() {
+            try {
+                // We'll fetch from our backend which should proxy or have the latest data
+                // For now, let's look for the FINANCE_TRACKER data in the main status
+                return null; 
+            } catch (e) { return null; }
+        }
+
+        async function updateDashboard() {
+            try {
+                // Fetch Main Status
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                // Fetch unMineable Stats
+                const unmineableResp = await fetch('/unmineable');
+                const unmineableData = await unmineableResp.json();
+
+                // Update Network Status
+                const dot = document.getElementById('status-dot');
+                const text = document.getElementById('status-text');
+                
+                // Update Global Stats
+                document.getElementById('total-hashrate').innerText = `${data.total_hashrate.toFixed(2)} H/s`;
+                
+                const computeDevices = data.devices.filter(d => d.device_id !== 'FINANCE_TRACKER');
+                document.getElementById('node-count').innerText = `${computeDevices.length} Active Processing Units`;
+
+                // Update Finance from unMineable API
+                if (unmineableData.success) {
+                    const stats = unmineableData.data;
+                    document.getElementById('bnb-balance').innerText = stats.balance.toFixed(8);
+                    
+                    // Daily/Hourly Calculation (using current hashrate)
+                    const totalHashrate = data.total_hashrate;
+                    const estDaily = (totalHashrate / 1000) * 0.00015; // Example logic, unMineable also provides rewards stats
+                    
+                    document.getElementById('daily-earnings').innerText = estDaily.toFixed(6);
+                    document.getElementById('hourly-earnings').innerText = `Hourly: ${(estDaily/24).toFixed(8)} BNB`;
+                }
+
+                // Update Nodes
+                const container = document.getElementById('nodes-container');
+                if (computeDevices.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 5rem; color: var(--text-dim); background: var(--card-bg); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <p>No active compute nodes detected. System in standby mode.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = computeDevices.map(device => `
+                        <div class="device-card">
+                            <div class="device-info">
+                                <h3>${device.device_id}</h3>
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <span class="status-badge ${device.status === 'AKTIF' ? 'status-active' : 'status-warning'}">${device.status}</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-dim);">ID: ${device.device_id.split('_').pop()}</span>
+                                </div>
+                            </div>
+                            <div class="device-metrics">
+                                <div class="metric-item">
+                                    <span class="label">TEMP</span>
+                                    <span class="value ${device.temp > 70 ? 'status-danger' : (device.temp > 60 ? 'status-warning' : '')}">${device.temp.toFixed(1)}°C</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="label">THREADS</span>
+                                    <span class="value">${device.threads}</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="label">HASHRATE</span>
+                                    <span class="value accent">${device.hashrate} H/s</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Update Logs
+                const logBox = document.getElementById('log-content');
+                logBox.innerHTML = data.decision_log.map(log => `
+                    <div class="log-item">
+                        <span class="log-time">[${log.timestamp}]</span>
+                        <span class="log-msg ${log.message.includes('⚠️') ? 'alert' : ''}">${log.message}</span>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error("Dashboard Sync Error:", error);
+                document.getElementById('status-dot').style.background = "var(--danger)";
+                document.getElementById('status-dot').style.boxShadow = "0 0 12px var(--danger)";
+                document.getElementById('status-text').innerText = "CONNECTION LOST";
+            }
+        }
+
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
+    </script>
+</body>
 </html>
